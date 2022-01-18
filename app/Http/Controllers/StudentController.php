@@ -51,11 +51,27 @@ class StudentController extends Controller
             'name' => 'required',
             'stdId' => 'required',
             'phone' => 'required',
-            'image' => 'required',
-
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048'
         ]);
 
-      $data = Student::create($request->all());
+        if ($request->hasfile('image')) {
+            $file = $request->file('image');
+            $extention = $file->getClientOriginalExtension();
+            $fileName = time().'.'.$extention;
+            $file->move('upload/'.$fileName);
+            $request['image'] = $fileName;
+
+        }
+        
+        dd($request->all());
+
+      $data = Student::create([
+          'name'=>$request->name,          
+          'stdId'=>$request->stdId,          
+          'phone'=>$request->phone,          
+          'image'=>$request->image,          
+      ]);
+
 
       return response()->json($data);
 
