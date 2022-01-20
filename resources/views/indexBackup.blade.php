@@ -39,40 +39,41 @@
             <!-- <====================Input Form========================= -->
 
             <div class="col-4">
-                <form id="addStudent" enctype="multipart/form-data">
+                <form id="addStudent" method="post" enctype="multipart/form-data">
                     @csrf
                     <div class="form-group">
                         <label for="fname">Name</label>
-                        <input type="text" class="form-control" id="stdName" name="name" placeholder="Enter First Name">
+                        <input type="text" class="form-control" id="stdName" placeholder="Enter First Name">
                         <span class="text-danger" id="nameError"></span>
                     </div>
 
                     <div class="form-group">
                         <label for="lname">Student ID</label>
-                        <input type="text" class="form-control" id="stdId" name="stdId" placeholder="Enter Last Name">
+                        <input type="text" class="form-control" id="stdId" placeholder="Enter Last Name">
                         <span class="text-danger" id="stdIdError"></span>
                     </div>
 
                     <div class="form-group">
                         <label for="text">Phone Number</label>
-                        <input type="text" class="form-control" id="stdPhone" name="phone" placeholder="Enter Contact Number">
+                        <input type="text" class="form-control" id="stdPhone" placeholder="Enter Contact Number">
                         <span class="text-danger" id="phoneError"></span>
                     </div>
 
                     <div class="form-group">
                         <label for="exampleFormControlFile1">Image</label>
-                        <input type="file" name="image" id="stdImage" class="form-control-file">
+                        <input type="file" name="image" id="stdImage" class="form-control-file" id="exampleFormControlFile1">
                     </div>
 
 
                     <input type="hidden" id="id">
 
-                    <button type="submit" id="addBtn" class="btn btn-sm bg-primary mr-2 d-inline">
+                    <button id="addBtn" class="btn btn-sm bg-primary mr-2 d-inline">
                         Add
                     </button>
-                    <button id="updateData" class="btn btn-sm bg-success mr-2 d-inline">
+                    <button  id="updateBtn" class="btn btn-sm bg-success mr-2 d-inline">
                         Update
                     </button>
+
                     <span class="text-success" id="inserted_msg"></span>
                 </form>
 
@@ -103,76 +104,12 @@
     </div>
 
     <hr>
-    <div class="text-center"> <button onclick="test()" id="#btn1"> Test Me </button></div>
+    <div class="text-center"> <button onclick="test()" id="#btn1"> click Me </button></div>
     <hr>
 
     <script>
-        //=================================== Start=======================
+        //==========================Read Data=============================
 
-        $(document).ready(function(e) {
-
-            $.ajaxSetup({
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                }
-            });
-
-
-            $(document).on('submit', '#addStudent', function(e) {
-                e.preventDefault();
-
-                let myData = new FormData($('#addStudent')[0]);
-
-                $.ajax({
-                    type: "post",
-                    data: myData,
-                    url: "{{route('ajax.store')}}",
-                    contentType: false,
-                    processData: false,
-                    success: function(response) {
-                        console.log("Data added Successfully");
-                        readData();
-                    }
-
-                });
-
-            });
-
-            readData();
-
-            $(document).on('click', '#updateData', function(e) {
-                e.preventDefault();
-
-                let editmyData = new editFormData($('#updateData')[0]);
-
-                $.ajax({
-                    type: "PUT",
-                    data: editmyData,
-                    url: "ajax/" + id,
-                    contentType: false,
-                    processData: false,
-                    success: function(response) {
-                        console.log("Data updated Successfully");
-                        readData();
-                    }
-
-                });
-
-            });
-
-        });
-        //=============================== Clear Data======================
-        function clearData() {
-            $('#stdName').val('');
-            $('#stdId').val('');
-            $('#stdPhone').val('');
-            $('#stdImage').val('');
-            $("#nameError").text('');
-            $("#stdIdError").text('');
-            $("#phoneError").text('');
-            $("#imageError").text('');
-        }
-        //=============================== Read Data========================
         function readData() {
             $.ajax({
                 type: "GET",
@@ -187,7 +124,7 @@
                                 <td>' + value.name + '</td>\
                                 <td>' + value.stdId + '</td>\
                                 <td>' + value.phone + '</td>\
-                                <td><img src=' + value.image + ' width="50px" height="50px" alt=""></td>\
+                                <td><img src="uploads/' + value.image + '" width="50px" height="50px" alt=""></td>\
                                 <td>\
                                 <button type="button" class="btn btn-sm btn-primary mr-2" onclick="editData((' + value.id + '))">Edit</button>\
                                 <button type="button" class="btn btn-sm btn-danger mr-2" onclick="deleteData(' + value.id + ')">Delete</button>\
@@ -195,11 +132,65 @@
                                  </tr>');
 
                     })
-                    clearData();
                 }
 
             })
         }
+
+        readData();
+
+        //============================ADD DATA=================================
+
+        function clearData() {
+            $('#stdName').val('');
+            $('#stdId').val('');
+            $('#stdPhone').val('');
+            $('#stdImage').val('');
+            $("#nameError").text('');
+            $("#stdIdError").text('');
+            $("#phoneError").text('');
+            $("#imageError").text('');
+        }
+
+        function addData() {
+
+            let name = $('#stdName').val();
+            let stdId = $('#stdId').val();
+            let stdPhone = $('#stdPhone').val();
+            let stdImage = $('#stdImage').val();
+
+            $.ajax({
+
+                type: "POST",
+                dataType: 'json',
+                data: {
+                    name: name,
+                    stdId: stdId,
+                    phone: stdPhone,
+                    image: stdImage
+                },
+                url: "{{route('ajax.store')}}",
+
+                success: function(response) {
+
+                    clearData();
+                    readData();
+                    $("#inserted_msg").text('Data successfully inserted');
+
+                },
+
+                error: function(error) {
+
+                    $("#nameError").text(error.responseJSON.errors.name);
+                    $("#stdIdError").text(error.responseJSON.errors.stdId);
+                    $("#phoneError").text(error.responseJSON.errors.phone);
+                    $("#imageError").text(error.responseJSON.errors.image);
+                }
+
+            })
+
+        }
+
         // =================================EDIT DATA=============================
         function editData(id) {
 
@@ -221,8 +212,42 @@
         }
 
         //==================================UPDATE DATA============================
+        function updateData() {
 
-        //=============================== Delete Data======================
+            let id = $('#id').val();
+            let name = $('#stdName').val();
+            let stdId = $('#stdId').val();
+            let stdPhone = $('#stdPhone').val();
+            let stdImage = $('#stdImage').val();
+
+            $.ajax({
+                type: "PUT",
+                dataType: "json",
+                data: {
+                    name: name,
+                    stdId: stdId,
+                    phone: stdPhone,
+                    image: stdImage
+                },
+                url: "ajax/" + id,
+                success: function(response) {
+
+                    clearData();
+                    readData();
+                    $("#inserted_msg").text('Data successfully updated');
+                },
+                error: function(error) {
+
+                    $("#nameError").text(error.responseJSON.errors.name);
+                    $("#stdIdError").text(error.responseJSON.errors.stdId);
+                    $("#phoneError").text(error.responseJSON.errors.phone);
+                    $("#imageError").text(error.responseJSON.errors.image);
+                }
+            })
+
+
+        }
+        //==============================DELETE DATA================================
 
         function deleteData(id) {
 
@@ -238,6 +263,24 @@
                 }
             })
         }
+
+        $(document).ready(function() {
+
+            $(document).on('submit', 'addStudent', function(e) {
+                e.preventDefault();
+                // <======================ajax setup=========================>
+                $.ajaxSetup({
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    }
+                });
+               $("#addBtn").click(function(){
+
+                   addData();
+
+               })
+            })
+        })
     </script>
 </body>
 

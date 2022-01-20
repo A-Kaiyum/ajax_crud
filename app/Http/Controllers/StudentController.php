@@ -40,11 +40,11 @@ class StudentController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-  
+
 
     public function store(Request $request)
     {
-        
+
 
         $request->validate([
 
@@ -54,27 +54,18 @@ class StudentController extends Controller
             'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048'
         ]);
 
-        if ($request->hasfile('image')) {
-            $file = $request->file('image');
-            $extention = $file->getClientOriginalExtension();
-            $fileName = time().'.'.$extention;
-            $file->move('upload/'.$fileName);
-            $request['image'] = $fileName;
+        $data = $request->except(['_token', 'image']);
 
+        if ($request->hasFile('image')) {
+            $file        = $request->file('image');
+            $path        = 'uploads';
+            $file_name   = time() . rand('0000', '9999') . '.' . $file->getClientOriginalName();
+            $file->move($path, $file_name);
+            $data['image'] = $path . '/' . $file_name;
         }
-        
-        dd($request->all());
+        $student = Student::create($data);
 
-      $data = Student::create([
-          'name'=>$request->name,          
-          'stdId'=>$request->stdId,          
-          'phone'=>$request->phone,          
-          'image'=>$request->image,          
-      ]);
-
-
-      return response()->json($data);
-
+        return response()->json($student);
     }
 
     /**
@@ -128,16 +119,22 @@ class StudentController extends Controller
             'image' => 'required',
 
         ]);
-        
-        $data = Student::findOrFail($id)->update([
+        $student = Student::findOrFail($id);
 
-            'name'=>$request->name,
-            'stdId'=>$request->stdId,
-            'phone'=>$request->phone,
-            'image'=>$request->image
+        if ($request->hasFile('image'))
+            {
+                $file        = $request->file('image');
+                $path        = 'uploads';
+                $file_name   = time().rand('0000','9999').'.'.$file->getClientOriginalName();
+                $file->move($path,$file_name);
+                $data['image'] = $path.'/'.$file_name;
+                if ($student->image != null && file_exists($student->image))
+                {
+                    unlink($student->image);
+                }
+            }
+            $student->update($data);
 
-        ]);
-        
         return response()->json($data);
     }
 
